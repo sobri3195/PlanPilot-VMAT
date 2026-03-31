@@ -21,6 +21,7 @@ function App() {
   const [analysis, setAnalysis] = useState(null);
   const [samples, setSamples] = useState([]);
   const [error, setError] = useState('');
+  const [activeTab, setActiveTab] = useState('input');
 
   const inputConfig = useMemo(
     () => [
@@ -72,55 +73,81 @@ function App() {
 
   return (
     <main className="container">
-      <h1>PlanPilot-VMAT</h1>
-      <p>
-        Perbandingan <strong>AI plan generation</strong> vs <strong>manual planning</strong> untuk studi non-inferiority VMAT multi-site.
-      </p>
+      <section className="hero card">
+        <h1>PlanPilot-VMAT</h1>
+        <p>
+          Perbandingan <strong>AI plan generation</strong> vs <strong>manual planning</strong> untuk studi non-inferiority VMAT multi-site.
+        </p>
+      </section>
 
-      <form onSubmit={analyze} className="card">
-        <label>
-          Site
-          <input value={form.site} onChange={(e) => onFieldChange('site', e.target.value)} />
-        </label>
+      <section className={`tab-panel ${activeTab === 'input' ? 'is-active' : ''}`}>
+        <form onSubmit={analyze} className="card">
+          <h2>Input Kasus</h2>
+          <label>
+            Site
+            <input value={form.site} onChange={(e) => onFieldChange('site', e.target.value)} />
+          </label>
 
-        <div className="grid">
-          {inputConfig.map(([key, label]) => (
-            <label key={key}>
-              {label}
-              <input type="number" step="0.01" value={form[key]} onChange={(e) => onFieldChange(key, e.target.value)} />
-            </label>
-          ))}
-        </div>
+          <div className="grid">
+            {inputConfig.map(([key, label]) => (
+              <label key={key}>
+                {label}
+                <input type="number" step="0.01" value={form[key]} onChange={(e) => onFieldChange(key, e.target.value)} />
+              </label>
+            ))}
+          </div>
 
-        <button type="submit">Analisis Kasus</button>
-      </form>
+          <button type="submit">Analisis Kasus</button>
+        </form>
+      </section>
 
       {error && <p className="error">{error}</p>}
 
-      {analysis && (
+      <section className={`tab-panel ${activeTab === 'analysis' ? 'is-active' : ''}`}>
+        {analysis ? (
+          <section className="card">
+            <h2>Hasil Analisis: {analysis.site}</h2>
+            <ul>
+              <li>CI non-inferior: {String(analysis.metrics.ci.nonInferior)}</li>
+              <li>HI non-inferior: {String(analysis.metrics.hi.nonInferior)}</li>
+              <li>OAR non-inferior: {String(analysis.metrics.oarScore.nonInferior)}</li>
+              <li>Penghematan waktu (menit): {analysis.metrics.planningTimeMinutes.savedByAI}</li>
+              <li>Reduksi revisi: {analysis.metrics.revisions.reducedByAI}</li>
+              <li>Status overall non-inferiority: {String(analysis.overallNonInferior)}</li>
+            </ul>
+          </section>
+        ) : (
+          <section className="card">
+            <h2>Hasil Analisis</h2>
+            <p>Belum ada hasil. Silakan isi data lalu tekan tombol Analisis Kasus.</p>
+          </section>
+        )}
+      </section>
+
+      <section className={`tab-panel ${activeTab === 'samples' ? 'is-active' : ''}`}>
         <section className="card">
-          <h2>Hasil Analisis: {analysis.site}</h2>
+          <h2>Sample Multi-site</h2>
           <ul>
-            <li>CI non-inferior: {String(analysis.metrics.ci.nonInferior)}</li>
-            <li>HI non-inferior: {String(analysis.metrics.hi.nonInferior)}</li>
-            <li>OAR non-inferior: {String(analysis.metrics.oarScore.nonInferior)}</li>
-            <li>Penghematan waktu (menit): {analysis.metrics.planningTimeMinutes.savedByAI}</li>
-            <li>Reduksi revisi: {analysis.metrics.revisions.reducedByAI}</li>
-            <li>Status overall non-inferiority: {String(analysis.overallNonInferior)}</li>
+            {samples.map((sample, index) => (
+              <li key={`${sample.site}-${index}`}>
+                {sample.site}: overall non-inferiority = {String(sample.overallNonInferior)}
+              </li>
+            ))}
           </ul>
         </section>
-      )}
-
-      <section className="card">
-        <h2>Sample Multi-site</h2>
-        <ul>
-          {samples.map((sample, index) => (
-            <li key={`${sample.site}-${index}`}>
-              {sample.site}: overall non-inferiority = {String(sample.overallNonInferior)}
-            </li>
-          ))}
-        </ul>
       </section>
+
+      <nav className="bottom-nav" aria-label="Mobile navigation">
+        <button type="button" className={activeTab === 'input' ? 'active' : ''} onClick={() => setActiveTab('input')}>
+          Input
+        </button>
+        <button type="button" className={activeTab === 'analysis' ? 'active' : ''} onClick={() => setActiveTab('analysis')}>
+          Hasil
+        </button>
+        <button type="button" className={activeTab === 'samples' ? 'active' : ''} onClick={() => setActiveTab('samples')}>
+          Sample
+        </button>
+      </nav>
     </main>
   );
 }
